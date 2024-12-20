@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Quiz MPU</title>
+<style>
+/* Stiluri generale */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #E1F5FE; /* Albastru deschis */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column; /* Toate elementele într-o coloană */
+}
+
+/* Containerul quiz-ului */
+#quiz, #results {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 600px;
+    margin: 20px auto;
+    animation: fadeIn 0.5s ease-in-out; /* Adăugare animație */
+}
+
+/* Butonul de start */
+#startQuiz {
+    font-size: 24px; /* Dimensiune mai mare a textului */
+    padding: 20px 40px; /* Dimensiune mai mare a padding-ului */
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 20px 0;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+#startQuiz:hover {
+    background: #1976D2;
+    transform: scale(1.05);
+}
+
+/* Textul întrebării */
+#questionText {
+    font-size: 18px; /* Dimensiune mai mare a textului */
+    margin-bottom: 20px;
+    color: #0277BD; /* Albastru închis */
+    background: #E1F5FE; /* Albastru deschis */
+    padding: 15px;
+    border-radius: 5px;
+    font-weight: bold; /* Text îngroșat */
+}
+
+/* Butoanele de răspuns */
+.answer-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    background: #FFF9C4; /* Galben deschis */
+    border: 1px solid #FFEB3B; /* Galben închis pentru bordură */
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px; /* Dimensiune mai mare a textului */
+    transition: background 0.3s ease, transform 0.2s ease;
+    font-weight: bold; /* Text îngroșat */
+}
+
+.answer-btn:hover {
+    background: #FFF176; /* Galben puțin mai închis */
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.correct {
+    background: #a5d6a7 !important; /* Verde puțin mai închis */
+    border-color: #388E3C;
+}
+
+.incorrect {
+    background: #ef9a9a !important; /* Roșu puțin mai închis */
+    border-color: #d32f2f;
+}
+
+/* Butoanele de navigare */
+.nav-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.nav-button {
+    padding: 12px 24px; /* Dimensiune mai mare a padding-ului */
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px; /* Dimensiune mai mare a textului */
+    transition: background 0.3s ease, transform 0.2s ease;
+    font-weight: bold; /* Text îngroșat */
+}
+
+.nav-button:hover {
+    background: #388E3C;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.nav-button#prevButton {
+    background: #9E9E9E;
+}
+
+.nav-button#prevButton:hover {
+    background: #757575;
+}
+
+/* Vizualizarea rezultatelor */
+.result-pass {
+    color: #4CAF50;
+    font-size: 22px; /* Dimensiune mai mică a textului */
+    font-weight: bold;
+}
+
+.result-fail {
+    color: #f44336;
+    font-size: 22px; /* Dimensiune mai mică a textului */
+    font-weight: bold;
+}
+
+/* Detaliile rezultatelor */
+#results div {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+#results p {
+    margin: 5px 0;
+    font-size: 16px; /* Dimensiune mai mare a textului */
+    font-weight: bold; /* Text îngroșat */
+}
+
+#results strong {
+    color: #333;
+}
+
+#results button {
+    font-size: 18px; /* Dimensiune mai mare a textului */
+    padding: 12px 24px; /* Dimensiune mai mare a padding-ului */
+    margin-top: 20px;
+}
+
+/* Animație */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Design responsive */
+@media (max-width: 768px) {
+    #quiz, #results {
+        width: 90%;
+        padding: 15px;
+    }
+    #startQuiz {
+        font-size: 18px;
+        padding: 10px 20px;
+    }
+    #questionText {
+        font-size: 14px;
+        padding: 10px;
+    }
+    .answer-btn {
+        font-size: 12px;
+        padding: 10px;
+    }
+    .nav-button {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+}
+</style>
+</head>
+<body>
+<button id="startQuiz">Începe quiz-ul</button>
+
+<div id="quiz" style="display: none;">
+  <div id="questionText" class="question"></div>
+  <div id="answerButtons" class="answers"></div>
+  <div class="nav-buttons">
+    <button class="nav-button" id="prevButton" style="display: none;">Înapoi</button>
+    <button class="nav-button" id="nextButton">Următoarea întrebare</button>
+  </div>
+</div>
+
+<div id="results" style="display: none;"></div>
+
+<script>
+const qa_data = [
+    {
+    "Frage": "De ce ai venit la MPU? De ce ești aici astăzi?",
+    "Antworten": [
+        {
+            "Typ": "richtig",
+            "Text": "Motivul participării mele este că am condus sub influența alcoolului, nu am respectat legea, am provocat un accident, am fost egoist și am reprezentat un risc atât pentru mine, cât și pentru alții. Am realizat că am o problemă cu alcoolul, am abuzat de consumul acestuia și am luat decizia de a înceta să mai beau. Obiectivul meu astăzi este să demonstrez că m-am schimbat și că sunt acum capabil să conduc responsabil."
+        },
+        {
+            "Typ": "falsch_ähnlich",
+            "Text": "Sunt aici pentru a demonstra că sunt un șofer bun, deși am avut o mică problemă."
+        },
+        {
+            "Typ": "falsch_total",
+            "Text": "Sunt aici pentru că m-a trimis bunica."
+        }
+    ]
+},
+
+            {
+                "Frage": "De ce sunt autoritățile îngrijorate de capacitatea ta de a conduce? Ești de acord să vii la MPU?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "<p>Da, sunt de acord, pentru că am condus sub influența alcoolului și am provocat un accident! Acesta este un delicte grav, care a pus în pericol viața mea și a altora!</p>"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Sunt de acord, deoarece autoritățile consideră că nu am înțeles legea corect."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Consider că MPU este complet inutilă."
+                    }
+                ]
+            },
+            {
+                "Frage": "Descrie ziua delictei din perspectiva ta, cu data și ora.",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "27.02.2023, luni, am avut un accident la ora 19:25. Am condus pe strada Nürnberger din Allersberg, din cauza consumului de alcool, am lovit mașina domnului Weinmann pe partea dreaptă a șoselei, au fost daune în valoare de aproximativ 13.000 de euro. Proba de sânge luată la ora 20:50 a relevat 2,02 promile. Consumul de alcool a început duminică, 26.02.2023, și a durat 29 de ore! Duminică, 26.02.2023, am sărbătorit ziua mea de naștere, care a început pe 24.02.2023. Am început să beau alcool de la ora 17:00 până la 02:00 noaptea. Au fost opt prieteni prezenți. Am băut 14 sticle de bere (0,5 litri), 7 litri de bere (5%) + 4 duble de shot de țuică (40 ml, 40%). Luni, 27.02.2023, am băut în pauze, două shot-uri scurte, și înainte de a merge acasă, două beri de 0,5 litri. Deci, în total, duminică și luni, am băut 8 litri de bere și cinci duble de shot."
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Pe 27.02.2023, o luni, am avut un accident în noapte."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am fost deloc în apropierea locului accidentului în acea zi."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ai planificat să bei atât de mult în acea zi?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <p>Nu, nu a fost planificat!</p>
+                        <p>Nu am avut control asupra consumului meu, acesta a scăpat de sub control în timpul petrecerii!</p>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am planificat să beau câteva beri, dar a fost mai mult."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Da, am planificat un consum excesiv de alcool."
+                    }
+                ]
+            },
+            {
+    "Frage": "Ai crezut că poți conduce? Nu ai simțit influența alcoolului?",
+    "Antworten": [
+        {
+            "Typ": "richtig",
+            "Text": "Dimineața în ziua respectivă, m-am trezit la ora șase cu dureri de cap, deși inițial îmi doream să dorm mai mult. Cu toate acestea, am crezut că pot conduce și am mers la muncă. Această decizie a fost clar greșită, deoarece am condus sub influența alcoolului, ceea ce a fost ilegal și a dus la un accident. Acum înțeleg că siguranța în trafic trebuie să fie prioritatea principală. Aș fi trebuit să sun și să anunț că nu sunt capabil să lucrez. Îmi pare sincer rău pentru ceea ce s-a întâmplat. Atunci, am avut sentimentul că pot conduce în siguranță, dar din perspectiva de azi știu că nu a fost așa."
+        },
+        {
+            "Typ": "falsch_ähnlich",
+            "Text": "Am crezut că sunt suficient de în formă pentru a conduce, deși am băut puțin."
+        },
+        {
+            "Typ": "falsch_total",
+            "Text": "Am fost complet înțărcat când am condus."
+        }
+    ]
+},
+
+            {
+                "Frage": "Ce efecte are alcoolul asupra capacității de a conduce?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <p>Reacții slabe, vedere îngustă</p>
+                        <p>Mai concentrat pe sine, mai puțin concentrat.</p>
+                        <p>Distanțele nu pot fi estimate corect</p>
+                        <p>De exemplu, cu mașinile care circulă în direcția opusă sau în fața mea.</p>
+                        <p>Pericolos, deoarece nu ești asigurat</p>
+                        <p>Dacă cauzezi un accident sub influența alcoolului.</p>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Alcoolul poate afecta capacitatea de a conduce ușor."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Alcoolul îmbunătățește capacitatea de a conduce."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cât de des ai condus sub influența alcoolului, fără să fii prins, și ce concluzii tragi din asta?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "<p>Din păcate, am condus des sub influența alcoolului, fără să iau în considerare riscurile. Am condus de mai multe ori ca în ziua delictei, sau cu restul de alcool în sânge, da! A fost neresponsabil din partea mea. Îmi pare rău!</p>"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am condus de câteva ori sub influența alcoolului, dar nu prea des."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am condus niciodată sub influența alcoolului."
+                    }
+                ]
+            },
+            {
+                "Frage": "Gânduri, sentimente după delicte?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "<p>În ziua următoare delictei, situația a fost jenantă, m-am simțit rușinat! Am fost lipsit de considerație și egoist. Am realizat greșelile mele și că aș fi putut răni pe cineva în trafic, mă bucur că nu am rănit pe nimeni! Înțeleg că am o problemă cu alcoolul și înțeleg pericolul pe care l-am reprezentat în trafic, mă bucur că nu am rănit pe nimeni!</p>"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "După delicte, m-am enervat puțin, pentru că mi-am pierdut permisul."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "M-am bucurat că am avut un accident."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cum te-ai adaptat după delicte cu alcoolul? Cine sau ce te-a motivat să îți schimbi comportamentul? Care a fost punctul de cotitură?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>După ce mi-am pierdut <strong>permisul de conducere</strong>, am fost șocat și nu știam ce să fac. În primele două-trei luni <strong>am continuat să beau</strong>, dar apoi din ce în ce mai puțin, până când pe <strong>12.07.2022</strong>, ziua de naștere a fiicei mele, am băut ultima mea bere și mi-am luat angajamentul să renunț la alcool.</li>
+                            <li><strong>Punctul de cotitură:</strong> Accidentul și delictele au fost un șoc pentru mine. Am ajuns la o conștientizare și am realizat că trebuie să îmi schimb comportamentul - pentru <strong>viitorul</strong> meu, pentru <strong>familia</strong> și pentru <strong>societate</strong>.</li>
+                            <li>Am realizat că am pus în pericol viața nevinovăților și că a fost momentul decisiv să îmi asum responsabilitatea și să pun capăt acestei obiceiuri periculoase.</li>
+                            <li><strong>Familia</strong> mea a fost cea mai mare motivație pentru a menține această <strong>schimbare</strong> pe termen lung.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am băut puțin mai puțin după delicte, deoarece a fost un șoc pentru mine."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "După delicte, am băut și mai mult, pentru că m-a afectat."
+                    }
+                ]
+            },
+            {
+                "Frage": "Din ce alte motive ai renunțat la alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <p>Am realizat că nu am control asupra consumului meu și că mă creează probleme în viață.</p>
+                        <p>Confruntări și situații jenante!</p>
+                        <p>Neglijarea hobby-urilor!</p>
+                        <p>Am realizat că alcoolul afectează negativ sănătatea și bunăstarea mea.</p>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am renunțat la alcool pentru că m-a cerut soția."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am renunțat la alcool, ci doar pentru o perioadă scurtă."
+                    }
+                ]
+            },
+            {
+                "Frage": "A fost ușor să renunți la alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li><strong>Nu!</strong> Nu a fost ușor, deoarece era neobișnuit să nu mai beau așa cum făceam înainte.</li>
+                            <li>Nu au existat <strong>probleme fizice</strong>, dar <strong>gândurile despre alcool</strong> au fost prezente la început, mai ales la <strong>zile de naștere</strong> și <strong>petreceri</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "A fost puțin dificil la început, dar apoi a devenit mai ușor."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Da, a fost foarte ușor să renunți la alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "De ce nu ai renunțat mai devreme la alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Nu m-am întrebat niciodată dacă ar trebui să renunț la alcool, deoarece nu m-am preocupat de <strong>sănătatea</strong> mea.</li>
+                            <li>Am crezut că <strong>alcoolul</strong> mă ajută să mă descurc cu <strong>stresul</strong> și să facilitez relațiile sociale.</li>
+                            <li>Consumul de <strong>alcool</strong> era considerat <strong>normal</strong> la petreceri, și nu am luat în considerare consecințele negative pentru <strong>corpul</strong> meu.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am gândit să renunț la alcool, dar nu am făcut-o."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am gândit niciodată să renunț la alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cât și cât de des ai băut? Trecut:",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <p>Între 20 și 36 de ani</p>
+                        <p>M-am căsătorit la 28 de ani și am trăit în România. În această perioadă, am băut 3-4 beri de 0,5 litri și un dublu de shot de două ori pe lună, de obicei în weekend, la ocazii speciale sau la restaurant.</p>
+                        <p>Între 36 și 40 de ani</p>
+                        <p>La 36 de ani, când am venit în Germania, comportamentul meu de a bea alcool s-a schimbat negativ. Am început să beau regulat și cantitatea de alcool a crescut. După muncă, de obicei vinerea, am băut 2-3 beri cu colegii mei. În weekend, ajungeam la 5-6, 7-8, 10-12 beri, uneori și țuică.</p>
+                        <p>Cantități maxime</p>
+                        <p>De trei ori pe an, am băut 16 beri + 5 duble de shot, deci aproximativ de patru ori pe an.</p>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am băut aproximativ 10 beri pe săptămână."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am băut doar ocazional o bere."
+                    }
+                ]
+            },
+            {
+                "Frage": "De ce ai băut? Cauze?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Cauza a fost în <strong>trecutul</strong> meu și în <strong>gândirea</strong> mea.</li>
+                            <li>În România, părinții mei erau ocupați cu noi. Deși aveau timp pentru noi, uneori m-am simțit neglijat.</li>
+                            <li>Când am venit în Germania în 2019, la 36 de ani, a fost o perioadă grea: Eram <strong>nefericit</strong>, <strong>despărțirea</strong> de soția mea, copiii și părinții m-a afectat, și m-am simțit <strong>singur</strong> și <strong>pierdut</strong>.</li>
+                            <li>Am început să beau alcool regulat, chiar și <strong>singur</strong>.</li>
+                            <li>Alcoolul m-a ajutat să reduc <strong>stresul</strong> și să uit de <strong>probleme</strong>.</li>
+                            <li>La noul loc de muncă, am găsit prieteni români și am început să beau cu ei, deoarece m-am simțit <strong>acceptat</strong> în grupul lor.</li>
+                            <li>Pentru a fi acceptat, am încercat să <strong>plac</strong> tuturor, să ajut pe alții și nu am știut să spun <strong>nu</strong>. Aveam frică de <strong>respingere</strong> și nu vorbeam cu nimeni despre problemele mele.</li>
+                            <li>În cele din urmă, am pierdut <strong>controlul</strong> asupra consumului meu de alcool.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am băut pentru că am avut mulți prieteni noi în Germania."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am băut pentru că aveam sete."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cum te-ai descurcat cu stresul în trecut?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "<p>În trecut, în România, vorbeam cu familia și partenera mea despre problemele mele.</p>"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "În trecut, am încercat să evit stresul."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "În trecut, am rezolvat problemele mele cu alcoolul."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ce funcție a avut consumul în perioada în care ai băut excesiv?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Am băut alcool pentru a reduce <strong>stresul</strong>.</li>
+                            <li>Consumul m-a ajutat să uit de <strong>probleme</strong>, cum ar fi <strong>despărțirea</strong> de familia mea și provocările vieții mele noi.</li>
+                            <li>Am vrut să fiu <strong>acceptat</strong> și <strong>așteptat</strong>.</li>
+                            <li>Noua viață era <strong>foarte grea</strong> pentru mine, și alcoolul părea o soluție pe termen scurt.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Consumul de alcool a fost o modalitate de a mă simți mai bine."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am băut alcool doar pentru că era distractiv."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cum te descurci cu stresul în viața ta de azi? Cum ai redus stresul?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li><strong>Deschidere:</strong> Vorbește deschis și sincer despre problemele tale.</li>
+                            <li><strong>Ajutor:</strong> Caută ajutor atunci când este nevoie, fie de la familia, prietenii sau de la profesioniști.</li>
+                            <li><strong>Setarea limitelor:</strong> Exprimă clar limitele tale personale și spune cu încredere nu, fără sentimente de vinovăție.</li>
+                            <li><strong>Strategii sănătoase:</strong> Folosește metode sănătoase pentru gestionarea stresului, cum ar fi sportul, exerciții de respirație și plimbări în natură.</li>
+                            <li><strong>Concentrare pe pozitiv:</strong> Concentrează-te pe activitățile care îți aduc bucurie și relaxare.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Încerc să evit stresul, când mă simt stresat."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Când am stres, beau o bere."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ce argumente contra sprijină ideea că nu ai fost dependent de alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li><strong>Fără simptome de abstinență:</strong> Nu am avut dureri fizice sau semne de abstinență.</li>
+                            <li><strong>Renunțare independentă:</strong> Am renunțat la băutură fără ajutor extern.</li>
+                            <li><strong>Consum moderat:</strong> Nu am băut cantități mari în timpul săptămânii și nu am băut dimineața.</li>
+                            <li><strong>Fiabilitate:</strong> Am respectat întotdeauna termenele profesionale și private.</li>
+                            <li><strong>Fără tratament medical:</strong> Nu am fost niciodată în spital și nu am făcut terapie.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Nu am avut simptome de abstinență, pentru că am băut doar ocazional."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am fost dependent de alcool, asta am realizat."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ce s-a schimbat în viața ta, de când nu mai bei?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <p>Totul a devenit mai pozitiv, am o viață nouă ca rezultat al renunțării la alcool:</p>
+                        <p>Mă simt mai bine, am mai multă energie. Relația cu partenera mea este mai bună, vorbesc deschis cu ea despre problemele care apar.</p>
+                        <p>La locul de muncă, sunt mai productiv și energic, am colegi noi care nu beau alcool.</p>
+                        <p>Am reînviat hobby-urile mele vechi. Fac din nou mai mult sport, ciclism, plimbări cu partenera mea și fiicele mele în natură.</p>
+                        <p>Timpul pe care îl petreceam în weekenduri cu consumul de alcool l-am înlocuit cu hobby-uri și activități familiale, deci am petrecut mai mult timp cu familia mea.</p>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Viața mea este puțin mai bună, de când beau mai puțin."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "De când nu mai beau, viața mea a devenit mai rea."
+                    }
+                ]
+            },
+           {
+    "Frage": "Care sunt situațiile de risc?",
+    "Antworten": [
+        {
+            "Typ": "richtig",
+            "Text": "Situațiile de risc includ crizele de viață, cum ar fi moartea unui îndrăgit, boala gravă sau pierderea locului de muncă. În astfel de momente, mă bazez pe sprijinul familiei și al prietenilor apropiați și caut ajutor emoțional sau profesional, dacă este nevoie. Nu folosesc alcoolul ca mijloc de consolare, ci mă concentrez pe soluții sănătoase, precum activitatea fizică, meditația sau discuțiile cu persoane de încredere. Alte situații includ reîntâlnirea cu vechii prieteni care oferă alcool, unde resping politicos și spun: „Nu, mulțumesc, nu beau alcool. Prefer o cola sau altă băutură fără alcool.“ În cazul presiunii sociale, sunt hotărât și gata să plec dacă situația devine inconfortabilă. La petreceri sau aniversări, explic clar că nu mai beau alcool din cauza problemelor din trecut și aleg băuturi fără alcool. În trecut, foloseam alcoolul când mă simțeam singur sau plictisit. Acum am o rutină diferită: mă implic în hobby-uri noi, fac sport sau petrec timp cu familia. La locul de muncă, în momentele de stres, evit alcoolul și aleg metode sănătoase precum pauze, plimbări sau tehnici de respirație. De asemenea, sunt sincer de la început în fața grupurilor noi de prieteni: „Nu beau alcool, am luat această decizie pentru mine“, astfel evitând presiunea viitoare."
+        },
+        {
+            "Typ": "falsch_ähnlich",
+            "Text": "Situațiile de risc sunt încă dificile pentru mine, dar încerc să le gestionez."
+        },
+        {
+            "Typ": "falsch_total",
+            "Text": "Nu există situații de risc pentru mine."
+        }
+    ]
+},
+
+            {
+                "Frage": "Unde vezi riscul unui recidiv, să comită din nou același delicte? De ce este riscul unui recidiv minim?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <p>În viitor, vreau să respect <strong>legea</strong>, pentru că nu vreau să pun în pericol viața nimănui. Desigur, nimeni nu poate fi sigur 100%.</p>
+                        <p>Riscul este minim, deoarece:</p>
+                        <ul>
+                            <li>Vorbește astăzi cu alții, cum ar fi <strong>partenera</strong> și <strong>familia</strong> mea, care mă sprijină, despre <strong>problemele</strong> mele.</li>
+                            <li>Am un <strong>nou loc de muncă</strong>, noi <strong>prieteni</strong> și mai mult timp pentru <strong>hobby-uri</strong>.</li>
+                            <li>Nu mă mai arăt mereu <strong>puternic</strong> și îmi permit să fiu și <strong>slab</strong>.</li>
+                            <li>Am învățat să spun <strong>nu</strong> și nu mai fac totul pentru a plăcea tuturor.</li>
+                            <li>Cunosc <strong>situațiile de risc</strong>, sunt conștient de dorința mea de <strong>acceptare</strong> și <strong>așteptare</strong> și cunosc <strong>cauzele</strong> consumului meu.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Există un risc mic, dar sunt încrezător că nu se va întâmpla."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Voi beau din nou atât de mult ca în trecut."
+                    }
+                ]
+            },
+            {
+                "Frage": "Plan de urgență (o listă) după un recidiv (dacă beau din nou!)?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "Numărul consultantului MPU, disponibil în orice moment!\n\nO listă: Ce se întâmplă dacă continui să bei: datorii, despărțire, pierderea locului de muncă, boală etc.! Pericolul de a pierde tot ce am realizat până acum! Sănătate, prieteni, sport, bani, hobby-uri!"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am un plan, dar nu mă voi aminti de el."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am un plan de urgență."
+                    }
+                ]
+            },
+            {
+    "Frage": "Ce ai învățat în timpul pregătirii pentru MPU?",
+    "Antworten": [
+        {
+            "Typ": "richtig",
+            "Text": "În timpul pregătirii pentru MPU, am învățat multe despre delictele mele și mi-am analizat greșelile. Am realizat că am fost egoist, nu am respectat legea și am condus sub influența alcoolului, punând în pericol atât viața mea, cât și a altora. Cunosc acum cauzele consumului meu de alcool, cum ar fi dorința mea de a fi acceptat și de a aparține unui grup. Am învățat că alcoolul este o otravă pentru nervi și celule, având efecte grave asupra sănătății, și că poate duce la dependență, deoarece la fiecare consum excesiv, celulele creierului sunt afectate. Consumul regulat dăunează memoriei și poate duce la scăderea inteligenței. Termeni precum „dependența de memorie” (când creierul își amintește valorile maxime) și „creșterea toleranței” (nevoia de a consuma mai mult alcool pentru același efect) îmi sunt acum clare. Cunosc riscurile consumului excesiv de alcool și înțeleg că riscul de a comite din nou un delict similar nu poate fi exclus complet. Prin analiza avantajelor și dezavantajelor, mă simt pregătit pentru viitor."
+        },
+        {
+            "Typ": "falsch_ähnlich",
+            "Text": "Am învățat puțin despre alcool în timpul pregătirii pentru MPU."
+        },
+        {
+            "Typ": "falsch_total",
+            "Text": "Pregătirea pentru MPU nu mi-a adus nimic."
+        }
+    ]
+},
+
+            {
+                "Frage": "Vrei să-ți recuperezi permisul de conducere?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "Cred că ar fi frumos dacă aș putea recupera permisul meu de conducere. \n\nMai important este însă că mi-am schimbat comportamentul, nu mai vreau să fiu un risc pentru nimeni când particip la trafic. Pentru că nu mai vreau să pun în pericol viața mea."
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Vreau să-mi recuperez permisul de conducere, deoarece îmi place să conduc mașina."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu mai vreau să-mi recuperez permisul de conducere."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ai ceva de adăugat pentru a încheia?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "Cred că retragerea permisului de conducere nu este atât de rea, deoarece este o experiență de învățare pentru mine. \n\nDacă nu mi s-ar fi întâmplat, nu aș fi schimbat nimic în viața mea. Sunt recunoscător pentru asta!"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Sunt recunoscător pentru experiența de învățare, dar pedeapsa este prea mare."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu, nu am nimic de adăugat."
+                    }
+                ]
+            },
+            {
+                "Frage": "Când ai avut prima dată contact cu alcoolul și când ai băut pentru prima dată?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": ` 
+                        <p>La 14 ani am băut pentru prima dată o bere. Nu mi-a plăcut deloc atunci!</p>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am avut contact cu alcoolul încă din copilărie."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am băut pentru prima dată alcool la 20 de ani."
+                    }
+                ]
+            },
+            {
+                "Frage": "Care au fost aspectele pozitive ale consumului de alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "În primul rând, a fost plăcut. M-am simțit relaxat și vesel. Un alt aspect pozitiv a fost că m-am simțit bine în societatea prietenilor, devenind mai comunicativ și deschis. Alcoolul avea uneori și o funcție distractive și ridica moralul."
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "M-am simțit doar mai bine când am băut alcool."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Consumul de alcool nu a avut niciun aspect pozitiv pentru mine."
+                    }
+                ]
+            },
+            {
+                "Frage": "Care au fost aspectele negative ale consumului de alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "A doua zi aveam dureri de cap, greață, oboseală și slăbiciune. Eram obosit, neîncrezător și o persoană complet diferită!"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "A doua zi aveam dureri de cap și erau puțin obosit."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu au existat aspecte negative pentru mine."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cu puțin și cu mult alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "Cu puțin alcool, adică o sau două beri, m-am simțit relaxat și vesel, a doua zi nu aveam probleme. Cu mult alcool, de exemplu 5-6 beri, a doua zi aveam dureri de cap, greață și oboseală extremă. Nu puteam continua activitățile mele normale."
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Cu puțin alcool nu aveam probleme, cu mult alcool eram doar puțin obosit."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Cu puțin sau mult alcool m-am simțit întotdeauna bine."
+                    }
+                ]
+            },
+            {
+                "Frage": "Unde și cu cine ai băut în principal?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "Am băut alcool în principal în societatea prietenilor și colegilor. De obicei, miercuri și joi seara, după muncă, mergeam pentru o bere la o bar. De asemenea, beau la petreceri, nunți sau evenimente importante împreună cu cunoscuți. Astfel, momentele de relaxare în grup cu alcool au fost legate. În trecut, am băut pentru a fi acceptat în grupul de prieteni, la fel ca ei."
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am băut alcool în principal în baruri și discoteci."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am băut întotdeauna doar singur alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ai fost vreodată abordat cu privire la consumul tău de alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "Da, din mai multe părți (mama și prietena). Beau prea mult. Dar am considerat consumul meu normal. Am ignorat totul. Au existat și conflicte din cauza alcoolului. De când am încetat să beau, totul s-a îmbunătățit. Înțeleg mai bine partenera mea. De asemenea, sunt mult mai productiv la locul de muncă."
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Uneori am fost abordat cu privire la consumul meu de alcool."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nimeni nu m-a abordat niciodată cu privire la consumul meu de alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "Au existat probleme cu prietena sau la locul de muncă din cauza consumului de alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": "Desigur, ne certam des despre consumul de alcool, la locul de muncă luni fără energie, obosit, da, aveam probleme să mă concentrez la locul de muncă!"
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Uneori au existat probleme din cauza consumului de alcool."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am avut niciodată probleme din cauza consumului de alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "Te-ai simțit vreodată vinovat din cauza consumului de alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li><strong>Da,</strong> mai ales după <strong>dureri de cap</strong> a doua zi.</li>
+                            <li>Sentimentele de vinovăție au dispărut însă repede, și nu am făcut nimic, deși știam că ar trebui să schimb ceva.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Uneori am simțit vinovăție, dar a dispărut repede."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am simțit niciodată vinovăție din cauza consumului de alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cum îți evaluezi consumul, ai pierdut vreodată controlul asupra cantităților băute?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Am avut <strong>probleme</strong> cu alcoolul și am pierdut de mai multe ori <strong>controlul</strong> asupra cantităților.</li>
+                            <li>Așa ceva s-a întâmplat aproximativ <strong>de patru ori pe an</strong>, mai ales cu <strong>țuică</strong>, care m-a scos repede din sărite.</li>
+                            <li>Nu știam atunci <strong>când să mă opresc</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Uneori am pierdut controlul asupra cantității, dar a fost rar."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am avut întotdeauna controlul asupra consumului meu de alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "Au apărut vreodată lacune în memoria ta din cauza consumului excesiv de alcool?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li><strong>Da,</strong> au existat <strong>lacune în memorie</strong>, când am pierdut părți din <strong>noapte</strong>.</li>
+                            <li>Acesta a fost un <strong>semnal clar</strong> că am depășit <strong>limita sigură</strong> și că alcoolul afectează <strong>memoria</strong> mea.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am avut câteva lacune în memorie după consumul de alcool."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am avut niciodată lacune în memorie din cauza alcoolului."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ai avut pauze de alcool sau încercări de abstinență?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li><strong>Nu,</strong> nu am avut <strong>pauze de alcool</strong> și niciodată nu am încercat să fiu abstinent.</li>
+                            <li>Deși am realizat că nu <strong>controlez situația</strong>, nu am luat <strong>măsuri concrete</strong>.</li>
+                            <li>Am uitat <strong>problemele</strong> prea repede și nu am realizat că abuzam deja de <strong>alcool</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Uneori am încercat să fac pauze de alcool, dar nu am reușit."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am făcut întotdeauna pauze de alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "În ce categorie de băutori te vezi astăzi, privind în urmă? Cum ți-ai evaluat comportamentul de băut până la delicte?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Astăzi mă văd în <strong>abuz</strong>: Cantitățile de alcool erau <strong>mari</strong> și <strong>problematice</strong>.</li>
+                            <li><strong>Scală:</strong> 1 - 10 (sub medie, medie, abuz, dependent).</li>
+                            <li>Evaluarea mea: <strong>8</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Am fost un băutor mediu, aș spune."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "M-aș identifica ca un băutor sub medie."
+                    }
+                ]
+            },
+            {
+                "Frage": "Bei alcool în prezent? Dacă da, ce, cât și cât de des? Bei bere fără alcool? Te poți imagina să bei în viitor una sau două beri?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Sunt abstinent de peste <strong>un an</strong>.</li>
+                            <li><strong>Nu!</strong> Nu beau bere fără alcool.</li>
+                            <li>Concentrează-te pe ceea ce <strong>mănânci</strong> și dacă există <strong>alcool</strong> în băuturi, alimente sau medicamente.</li>
+                            <li>La medicamente întreb întotdeauna despre <strong>alternative</strong> fără alcool.</li>
+                            <li>Știu că nu s-ar opri la o <strong>bere</strong>, deoarece am <strong>probleme</strong> cu alcoolul.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Nu mai beau bere cu alcool, doar ocazional o bere fără alcool."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Beau din nou regulat alcool."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ce contact ai în prezent cu grupul de prieteni cu care ai băut?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Nu mai am <strong>contact</strong> cu grupul meu de prieteni de altădată.</li>
+                            <li>Când am exprimat dorința de a <strong>nu mai bea</strong>, unii dintre prietenii mei nu m-au <strong>înțeles</strong> sau <strong>acceptat</strong>.</li>
+                            <li>Majoritatea întâlnirilor au avut loc în <strong>locuri</strong> unde se bea alcool.</li>
+                            <li>Acum <strong>evit</strong> astfel de evenimente sau localuri.</li>
+                            <li>În <strong>cercul meu de prieteni actual</strong>, consumul intens de alcool nu este acceptabil.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Încă am contact cu grupul meu de prieteni de altădată, dar nu mai beau cu ei."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Merg încă cu același grup de prieteni să beau."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ai fost un șofer sigur?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li><strong>Nu</strong>, nu am fost un șofer sigur, deoarece am acționat <strong>egoist</strong> și <strong>neglijent</strong>.</li>
+                            <li>Am luat <strong>riscuri</strong> fără să mă gândesc la <strong>consecințe</strong>.</li>
+                            <li>Acum înțeleg că conducerea sigură înseamnă să <strong>respecti regulile</strong>, să <strong>conduci prevăzător</strong> și să <strong>îți asumi responsabilitatea</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "De obicei, am fost un șofer sigur, doar uneori nu."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am fost întotdeauna un șofer sigur."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cum evaluezi faptul că nu ai avut niciodată un accident mai mare până la accident?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>A fost doar <strong>noroc</strong>, deoarece am încălcat atât de des <strong>legea</strong> și totuși nu am provocat un accident.</li>
+                            <li>Am luat <strong>riscuri</strong> fără să mă gândesc la <strong>consecințe</strong>.</li>
+                            <li>Acum știu că <strong>norocul</strong> singur nu este suficient și că trebuie să conduc responsabil pentru a asigura <strong>siguranța</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "A fost noroc că nu am avut niciun accident până la accident."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu am avut niciun accident, deoarece am condus întotdeauna bine."
+                    }
+                ]
+            },
+            {
+                "Frage": "De ce există atât de multe reguli și legi?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Avem nevoie de <strong>reguli</strong> pentru că ne <strong>protejează</strong>.</li>
+                            <li>Am înțeles că, dacă <strong>respect regulile</strong>, trăiesc <strong>sigur</strong> și în <strong>pace</strong>.</li>
+                            <li>Fără reguli, ar exista doar <strong>haos</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Există atât de multe reguli pentru că este mai greu."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Regulile și legile sunt inutile."
+                    }
+                ]
+            },
+            {
+                "Frage": "Cum te vezi ca șofer în trecut?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Am fost un <strong>egoist</strong> și <strong>neglijent</strong> șofer.</li>
+                            <li>M-am gândit doar la mine și nu la <strong>consecințe</strong>.</li>
+                            <li>Îmi pare <strong>rău</strong>!</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Nu am fost un bun șofer în trecut."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Am fost un bun șofer în trecut."
+                    }
+                ]
+            },
+            {
+                "Frage": "Ce este, în opinia ta, un șofer bun, normal?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Un șofer bun este cineva care <strong>respectă regulile</strong>.</li>
+                            <li>El este <strong>atent</strong>, gândește la alții și nu reprezintă o <strong>pericol</strong> în trafic.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Un șofer bun este cineva care conduce cu grijă."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Un șofer bun este cineva care conduce repede."
+                    }
+                ]
+            },
+            {
+                "Frage": "Câți oameni trebuie să meargă anual la MPU?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Aproximativ <strong>90.000 de oameni</strong> în anul 2019.</li>
+                            <li>Motive: <strong>Alcool</strong> (40%), <strong>Droguri și medicamente</strong> (30%), <strong>Puncte</strong> (18%) și <strong>Restul</strong> (12%).</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Aproximativ 100.000 de oameni trebuie să meargă anual la MPU."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Doar foarte puțini oameni trebuie să meargă anual la MPU."
+                    }
+                ]
+            },
+            {
+                "Frage": "Când ai spus pentru ultima dată nu?",
+                "Antworten": [
+                    {
+                        "Typ": "richtig",
+                        "Text": `
+                        <ul>
+                            <li>Acum spun și în <strong>situații sociale</strong> înțelept <strong>nu</strong>, de exemplu când se oferă <strong>alcool</strong> sau apare <strong>presiune</strong>.</li>
+                            <li>A fost inițial <strong>dificil</strong> pentru mine, dar acum știu că numai așa pot menține <strong>abstinența</strong> mea.</li>
+                            <li>De asemenea, am refuzat unui prieten, care s-a mutat pentru a cincea oară în doi ani și avea din nou nevoie de oameni pentru a transporta <strong>cutii</strong>.</li>
+                        </ul>
+                        `
+                    },
+                    {
+                        "Typ": "falsch_ähnlich",
+                        "Text": "Acum spun mai des nu decât înainte."
+                    },
+                    {
+                        "Typ": "falsch_total",
+                        "Text": "Nu spun niciodată nu."
+                    }
+                ]
+            }
+];
+
+let currentQuestion = 0;
+let userAnswers = [];
+
+document.getElementById('startQuiz').onclick = startQuiz;
+document.getElementById('nextButton').onclick = nextQuestion;
+document.getElementById('prevButton').onclick = prevQuestion;
+
+function startQuiz() {
+    document.getElementById('startQuiz').style.display = 'none';
+    document.getElementById('quiz').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    currentQuestion = 0;
+    userAnswers = new Array(qa_data.length).fill(null);
+    showQuestion();
+}
+
+function showQuestion() {
+    const q = qa_data[currentQuestion];
+    document.getElementById('questionText').innerHTML = `Întrebarea ${currentQuestion + 1} din ${qa_data.length}: ${q.Frage}`;
+    const answerButtonsDiv = document.getElementById('answerButtons');
+    answerButtonsDiv.innerHTML = ''; // Șterge răspunsurile anterioare
+    q.Antworten.forEach((answer, i) => {
+        const button = document.createElement('button');
+        button.classList.add('answer-btn');
+        if (userAnswers[currentQuestion] !== null) {
+            if (userAnswers[currentQuestion] === i) {
+                if (answer.Typ === 'richtig') {
+                    button.classList.add('correct');
+                } else {
+                    button.classList.add('incorrect');
+                }
+            }
+        }
+        button.innerHTML = answer.Text; // Folosește innerHTML pentru a reda corect tagurile HTML
+        button.addEventListener('click', () => selectAnswer(i));
+        answerButtonsDiv.appendChild(button);
+    });
+
+    document.getElementById('prevButton').style.display = 
+        currentQuestion > 0 ? 'inline-block' : 'none';
+    document.getElementById('nextButton').textContent = 
+        currentQuestion === qa_data.length - 1 ? 'Afișează rezultatele' : 'Următoarea întrebare';
+}
+
+function selectAnswer(index) {
+    userAnswers[currentQuestion] = index;
+    setTimeout(() => {
+        showQuestion();
+    }, 500); // Întârziere de 500ms
+}
+
+function nextQuestion() {
+    if (currentQuestion < qa_data.length - 1) {
+        currentQuestion++;
+        showQuestion();
+    } else {
+        showResults();
+    }
+}
+
+function prevQuestion() {
+    if (currentQuestion > 0) {
+        currentQuestion--;
+        showQuestion();
+    }
+}
+
+function showResults() {
+    let score = 0;
+    for (let i = 0; i < qa_data.length; i++) {
+        const userAnswerIndex = userAnswers[i];
+        if (userAnswerIndex !== null) {
+            const correctAnswer = qa_data[i].Antworten.findIndex(answer => answer.Typ === 'richtig');
+            if (userAnswerIndex === correctAnswer) {
+                score++;
+            }
+        }
+    }
+    const percentage = (score / qa_data.length) * 100;
+    const passed = percentage >= 80;
+    const resultsHtml = `
+        <h2 class="${passed ? 'result-pass' : 'result-fail'}">
+            ${passed ? 'Test trecut!' : 'Test nereusit'}
+        </h2>
+        <p>Ai răspuns corect la ${score} din ${qa_data.length} întrebări (${percentage}%)</p>
+        
+        <h3>Răspunsurile tale:</h3>
+        ${qa_data.map((q, i) => `
+            <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd;">
+                <p><strong>Întrebarea ${i + 1}:</strong> ${q.Frage}</p>
+                <p>Răspunsul tău: ${userAnswers[i] !== null ? q.Antworten[userAnswers[i]].Text : 'Niciun răspuns'}</p>
+                <p>Răspunsul corect: ${q.Antworten.find(answer => answer.Typ === 'richtig').Text}</p>
+                <p style="color: ${userAnswers[i] !== null && userAnswers[i] === q.Antworten.findIndex(answer => answer.Typ === 'richtig') ? '#4CAF50' : '#f44336'}">
+                    ${userAnswers[i] !== null && userAnswers[i] === q.Antworten.findIndex(answer => answer.Typ === 'richtig') ? 'Corect!' : 'Greșit'}
+                </p>
+            </div>
+        `).join('')}
+        
+        <button onclick="startQuiz()" class="nav-button">Restartează quiz-ul</button>
+    `;
+
+    document.getElementById('quiz').style.display = 'none';
+    document.getElementById('results').innerHTML = resultsHtml;
+    document.getElementById('results').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
